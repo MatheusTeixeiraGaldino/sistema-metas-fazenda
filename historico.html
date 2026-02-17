@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Histórico do Colaborador</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .hist-wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
+
+    .timeline { position: relative; padding-left: 28px; }
+    .timeline::before {
+      content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+      width: 2px; background: #d0e8d8;
+    }
+    .timeline-item { position: relative; margin-bottom: 20px; }
+    .timeline-dot {
+      position: absolute; left: -24px; top: 4px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #2e8b57; border: 2px solid white;
+      box-shadow: 0 0 0 2px #2e8b57;
+    }
+    .timeline-dot.antigo { background: #999; box-shadow: 0 0 0 2px #999; }
+    .timeline-dot.alerta { background: #e07b00; box-shadow: 0 0 0 2px #e07b00; }
+    .timeline-card {
+      background: white; border-radius: 10px; padding: 14px 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+    }
+    .timeline-card .data { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .timeline-card .titulo { font-size: 15px; font-weight: 600; color: #222; }
+    .timeline-card .detalhe { font-size: 13px; color: #555; margin-top: 4px; }
+
+    .colab-header {
+      background: white; border-radius: 14px; padding: 20px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px;
+      display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap;
+    }
+    .colab-avatar {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: #2e8b57; display: flex; align-items: center;
+      justify-content: center; color: white; font-size: 22px;
+      flex-shrink: 0;
+    }
+    .colab-info { flex: 1; }
+    .colab-info h3 { margin: 0 0 4px; font-size: 20px; }
+    .colab-info p  { margin: 0; font-size: 13px; color: #666; line-height: 1.6; }
+
+    .solicit-form { background: #fff8e1; border: 1px solid #ffc107; border-radius: 12px; padding: 20px; }
+    .solicit-form h4 { color: #856404; margin-bottom: 12px; }
+
+    .req-card {
+      background: white; border-radius: 10px; padding: 14px 16px;
+      margin-bottom: 12px; border-left: 4px solid #ffc107;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+    }
+    .req-card.aprovada { border-left-color: #2e8b57; }
+    .req-card.recusada { border-left-color: #e53e3e; }
+    .req-card strong { display: block; margin-bottom: 4px; }
+    .req-card span   { font-size: 13px; color: #666; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="tela-login" style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#1a5e38,#2e8b57);padding:20px">
+  <div class="login-box">
+    <div class="logo-area"><h1>👤 Histórico</h1><p>Sistema de Metas</p></div>
+    <div class="form-group"><label>Chapa</label><input type="text" id="lc" placeholder="Sua chapa"/></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="ls" placeholder="Sua senha"/></div>
+    <button class="btn-primary" onclick="login()">Entrar</button>
+    <p id="le" class="erro-msg"></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div class="hist-wrap">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <h2 style="color:#1a5e38;margin:0">👤 Histórico do Colaborador</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="index.html" style="text-decoration:none">
+          <button class="btn-secondary" style="width:auto">← Sistema</button>
+        </a>
+      </div>
+    </div>
+
+    <!-- BUSCA -->
+    <div class="section-box">
+      <div class="filtros-linha">
+        <input type="text" id="busca-colab" placeholder="Buscar por nome ou chapa..." oninput="buscarColaborador()"/>
+      </div>
+      <div id="resultado-busca" style="margin-top:12px"></div>
+    </div>
+
+    <!-- PERFIL DO COLABORADOR -->
+    <div id="painel-colab" style="display:none">
+
+      <!-- Header -->
+      <div class="colab-header">
+        <div class="colab-avatar" id="colab-avatar">👤</div>
+        <div class="colab-info">
+          <h3 id="colab-nome-tit">—</h3>
+          <p id="colab-detalhes">—</p>
+        </div>
+        <div id="colab-status-badge"></div>
+      </div>
+
+      <!-- Turma atual -->
+      <div class="section-box">
+        <h3>🏘️ Situação Atual</h3>
+        <div id="colab-situacao-atual">—</div>
+      </div>
+
+      <!-- Timeline de histórico de turmas -->
+      <div class="section-box">
+        <h3>📅 Histórico de Turmas</h3>
+        <div id="timeline-turmas" class="timeline">Carregando...</div>
+      </div>
+
+      <!-- Solicitação de transferência (líder) -->
+      <div id="painel-solicitar" style="display:none" class="section-box">
+        <h3>🔄 Solicitar Transferência de Turma</h3>
+        <div class="solicit-form">
+          <h4>⚠️ Solicitar correção de turma</h4>
+          <p style="font-size:13px;color:#666;margin-bottom:14px">
+            Use isto quando o colaborador está na sua turma mas deveria estar em outra.
+            A gestão irá revisar e confirmar a data de início.
+          </p>
+          <div class="form-group">
+            <label>Turma correta</label>
+            <select id="turma-destino" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px">
+              <option value="">Selecione a turma de destino</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Data de início na nova turma</label>
+            <input type="date" id="data-transferencia" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px"/>
+          </div>
+          <div class="form-group">
+            <label>Motivo / Observação</label>
+            <textarea id="motivo-transferencia" rows="3"
+              style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px"
+              placeholder="Ex: Colaborador foi realocado para a Turma B desde o dia 10/02"></textarea>
+          </div>
+          <button class="btn-primary" style="width:auto" onclick="enviarSolicitacao()">
+            📤 Enviar Solicitação
+          </button>
+          <p id="msg-solicit" class="ok-msg"></p>
+        </div>
+      </div>
+
+      <!-- Histórico de solicitações -->
+      <div class="section-box">
+        <h3>📋 Solicitações de Transferência</h3>
+        <div id="lista-solicitacoes">Nenhuma solicitação encontrada.</div>
+      </div>
+
+    </div>
+
+    <!-- PAINEL GESTÃO: solicitações pendentes -->
+    <div id="painel-gestao" style="display:none" class="section-box">
+      <h3>⚙️ Solicitações Pendentes de Aprovação</h3>
+      <div id="lista-pendentes-gestao">Carregando...</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, doc, addDoc, getDoc,
+           getDocs, updateDoc, query, where, orderBy }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyDuz7WznZjMV0Jo5QRZHBSjNIC7XzMNH0A",
+    authDomain: "sistema-metas-fazenda.firebaseapp.com",
+    projectId: "sistema-metas-fazenda",
+    storageBucket: "sistema-metas-fazenda.firebasestorage.app",
+    messagingSenderId: "736592211764",
+    appId: "1:736592211764:web:2b07e6a79d8571cbae3f61"
+  });
+  window._db  = getFirestore(app);
+  window._auth= getAuth(app);
+  window._fb  = { signInWithEmailAndPassword, collection, doc,
+                  addDoc, getDoc, getDocs, updateDoc, query, where, orderBy };
+</script>
+<script src="historico.js"></script>
+</body>
+</html>
