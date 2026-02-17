@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Metas e Resultados — Sistema de Metas</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    .mr-wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+    .abas { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
+    .aba {
+      padding: 10px 20px; border-radius: 8px 8px 0 0; cursor: pointer;
+      font-size: 14px; font-weight: 600; border: none;
+      background: #e0e0e0; color: #555; transition: all 0.2s;
+    }
+    .aba.ativa { background: #2e8b57; color: white; }
+    .painel-aba { display: none; }
+    .painel-aba.ativo { display: block; }
+
+    .resultado-linha {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 14px; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 8px;
+    }
+    .resultado-linha:last-child { border-bottom: none; }
+    .resultado-linha .info { flex: 1; }
+    .resultado-linha .info strong { display: block; font-size: 14px; }
+    .resultado-linha .info span  { font-size: 13px; color: #666; }
+
+    .semana-card {
+      background: white; border-radius: 12px; padding: 16px;
+      margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-left: 4px solid #ddd;
+    }
+    .semana-card.ganhou { border-left-color: #2e8b57; }
+    .semana-card.perdeu { border-left-color: #e53e3e; }
+    .semana-card.parcial{ border-left-color: #f59e0b; }
+    .semana-card h4 { margin: 0 0 10px; font-size: 15px; color: #222; }
+
+    .progresso-barra { background: #eee; border-radius: 4px; height: 8px; margin: 8px 0; }
+    .progresso-fill  { border-radius: 4px; height: 8px; transition: width 0.5s; }
+    .progresso-fill.ok  { background: #2e8b57; }
+    .progresso-fill.no  { background: #e53e3e; }
+    .progresso-fill.par { background: #f59e0b; }
+
+    .dias-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 8px; margin-top: 10px; }
+    .dia-card  {
+      background: #f8f9fa; border-radius: 8px; padding: 10px;
+      text-align: center; font-size: 13px; border: 1px solid #eee;
+    }
+    .dia-card .dia-data   { font-size: 11px; color: #888; margin-bottom: 2px; }
+    .dia-card .dia-valor  { font-size: 18px; font-weight: 700; color: #2e8b57; }
+    .dia-card .dia-label  { font-size: 11px; color: #888; }
+    .dia-card.sem-resultado .dia-valor { color: #bbb; }
+    .dia-card .btn-del { background: none; border: none; color: #e53e3e; cursor: pointer; font-size: 14px; margin-top: 4px; }
+
+    .drop-zone {
+      border: 2px dashed #2e8b57; border-radius: 10px; padding: 30px;
+      text-align: center; background: #f0f9f4; cursor: pointer;
+    }
+    .drop-zone:hover { background: #d4edda; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="tela-login" style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#1a5e38,#2e8b57);padding:20px">
+  <div class="login-box">
+    <div class="logo-area"><h1>🎯 Metas e Resultados</h1><p>Sistema de Metas</p></div>
+    <div class="form-group"><label>Chapa</label><input type="text" id="lc" placeholder="Sua chapa"/></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="ls" placeholder="Sua senha"/></div>
+    <button class="btn-primary" onclick="login()">Entrar</button>
+    <p id="le" class="erro-msg"></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div class="mr-wrap">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <h2 style="color:#1a5e38;margin:0">🎯 Metas e Resultados</h2>
+      <a href="index.html" style="text-decoration:none">
+        <button class="btn-secondary" style="width:auto">← Sistema</button>
+      </a>
+    </div>
+
+    <!-- ABAS -->
+    <div class="abas">
+      <button class="aba ativa" onclick="trocarAba('lancar')">📋 Lançar Meta/Resultado</button>
+      <button class="aba" onclick="trocarAba('importar')">📥 Importar Excel</button>
+      <button class="aba" onclick="trocarAba('historico')">📊 Histórico</button>
+    </div>
+
+    <!-- ABA: LANÇAR -->
+    <div id="aba-lancar" class="painel-aba ativo">
+      <div class="section-box">
+        <h3>Selecionar Turma e Semana</h3>
+        <div class="form-group">
+          <label>Fazenda</label>
+          <select id="l-fazenda" onchange="carregarTurmasLancar()">
+            <option value="">Selecione a fazenda</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Turma</label>
+          <select id="l-turma" onchange="carregarSemanaLancar()">
+            <option value="">Selecione a turma</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>📅 Semana (Dom → Sáb)</label>
+          <select id="l-semana" onchange="carregarDadosSemana()">
+            <option value="">Selecione a semana</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="painel-semana" style="display:none">
+
+        <!-- META DA SEMANA -->
+        <div class="section-box">
+          <h3>🎯 Meta da Semana</h3>
+          <div class="form-group">
+            <label>Valor da Meta</label>
+            <input type="number" id="l-meta-valor" placeholder="Ex: 500"/>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn-primary" style="width:auto" onclick="salvarMeta()">💾 Salvar Meta</button>
+            <button id="btn-excluir-meta" class="btn-secondary" style="width:auto;color:#e53e3e;border-color:#e53e3e;display:none" onclick="excluirMeta()">🗑️ Excluir Meta</button>
+          </div>
+          <p id="msg-meta" class="ok-msg"></p>
+        </div>
+
+        <!-- RESULTADOS DIÁRIOS -->
+        <div class="section-box">
+          <h3>📅 Resultados Diários</h3>
+          <p style="font-size:13px;color:#666;margin-bottom:16px">
+            Lance o resultado de cada dia da semana. A soma será comparada com a meta.
+          </p>
+
+          <div id="dias-semana-form"></div>
+
+          <div style="margin-top:16px;padding:14px;background:#f0f9f4;border-radius:10px;border:1px solid #d4edda">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+              <div>
+                <span style="font-size:13px;color:#555">Soma dos resultados:</span>
+                <strong id="soma-resultados" style="font-size:22px;color:#2e8b57;margin-left:8px">0</strong>
+              </div>
+              <div>
+                <span style="font-size:13px;color:#555">Meta:</span>
+                <strong id="meta-referencia" style="font-size:22px;color:#1a5e38;margin-left:8px">—</strong>
+              </div>
+              <div id="status-semana-badge"></div>
+            </div>
+            <div class="progresso-barra">
+              <div class="progresso-fill" id="barra-progresso" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ABA: IMPORTAR -->
+    <div id="aba-importar" class="painel-aba">
+      <div class="section-box">
+        <h3>📥 Importar Metas ou Resultados via Excel</h3>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">
+          O arquivo Excel deve ter as colunas abaixo. Baixe o modelo para usar como base.
+        </p>
+
+        <div style="background:#f0f9f4;border-radius:8px;padding:14px;margin-bottom:16px;font-size:13px">
+          <strong>Para importar METAS:</strong><br/>
+          Colunas: <code>TURMA | SEMANA_INICIO (YYYY-MM-DD) | META</code><br/><br/>
+          <strong>Para importar RESULTADOS:</strong><br/>
+          Colunas: <code>TURMA | DATA (YYYY-MM-DD) | RESULTADO</code>
+        </div>
+
+        <button class="btn-secondary" style="width:auto;margin-bottom:16px" onclick="baixarModelo()">
+          📄 Baixar Modelo Excel
+        </button>
+
+        <div class="form-group">
+          <label>Tipo de importação</label>
+          <select id="imp-tipo" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px">
+            <option value="metas">Importar Metas</option>
+            <option value="resultados">Importar Resultados Diários</option>
+          </select>
+        </div>
+
+        <div class="drop-zone" onclick="document.getElementById('imp-file').click()">
+          <p style="color:#2e8b57;font-weight:600;margin:0">📂 Clique para selecionar o arquivo Excel</p>
+          <small style="color:#888">.xlsx ou .csv</small>
+        </div>
+        <input type="file" id="imp-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importarExcel(event)"/>
+
+        <div id="imp-resultado" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+    <!-- ABA: HISTÓRICO -->
+    <div id="aba-historico" class="painel-aba">
+      <div class="section-box">
+        <div class="filtros-linha">
+          <select id="h-fazenda" onchange="carregarHistoricoMetas()">
+            <option value="">Todas as fazendas</option>
+          </select>
+          <select id="h-turma" onchange="carregarHistoricoMetas()">
+            <option value="">Todas as turmas</option>
+          </select>
+        </div>
+      </div>
+      <div id="historico-metas">Carregando...</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, doc, addDoc, getDoc,
+           getDocs, updateDoc, deleteDoc, query, where }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyDuz7WznZjMV0Jo5QRZHBSjNIC7XzMNH0A",
+    authDomain: "sistema-metas-fazenda.firebaseapp.com",
+    projectId: "sistema-metas-fazenda",
+    storageBucket: "sistema-metas-fazenda.firebasestorage.app",
+    messagingSenderId: "736592211764",
+    appId: "1:736592211764:web:2b07e6a79d8571cbae3f61"
+  });
+  window._db   = getFirestore(app);
+  window._auth = getAuth(app);
+  window._fb   = { signInWithEmailAndPassword, collection, doc, addDoc,
+                   getDoc, getDocs, updateDoc, deleteDoc, query, where };
+</script>
+<script src="metas-resultados.js"></script>
+</body>
+</html>
