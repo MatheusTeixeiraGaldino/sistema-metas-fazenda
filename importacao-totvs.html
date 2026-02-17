@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Importar Excel Totvs — Sistema de Metas</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    .import-wrap { max-width: 780px; margin: 0 auto; padding: 24px 16px; }
+    .drop-zone {
+      border: 3px dashed #2e8b57; border-radius: 14px;
+      padding: 48px 20px; text-align: center;
+      background: #f0f9f4; cursor: pointer; transition: all 0.2s;
+    }
+    .drop-zone:hover { background: #d4edda; border-color: #1a5e38; }
+    .drop-zone .icon { font-size: 48px; display: block; margin-bottom: 12px; }
+    .drop-zone h3 { color: #1a5e38; margin: 0 0 6px; }
+    .drop-zone p { color: #666; font-size: 14px; margin: 0; }
+    .stats-row {
+      display: grid; grid-template-columns: repeat(2,1fr);
+      gap: 12px; margin-bottom: 20px;
+    }
+    @media(min-width:500px){ .stats-row { grid-template-columns: repeat(4,1fr); } }
+    .stat { background: white; border-radius: 10px; padding: 14px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.07); }
+    .stat-n { font-size: 26px; font-weight: 700; }
+    .stat-l { font-size: 11px; color: #888; font-weight: 600; text-transform: uppercase; margin-top: 2px; }
+    .c-verde   { color: #2e8b57; }
+    .c-azul    { color: #0056b3; }
+    .c-laranja { color: #e07b00; }
+    .c-vermelho{ color: #c0392b; }
+    .mapa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media(max-width:500px){ .mapa-grid { grid-template-columns: 1fr; } }
+    .mapa-linha label { font-size: 12px; font-weight: 600; color: #555; display: block; margin-bottom: 4px; }
+    .mapa-linha select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; }
+    .mapa-ok  { border-color: #2e8b57 !important; background: #f0f9f4; }
+    .mapa-err { border-color: #e53e3e !important; }
+    .alerta-item {
+      background: white; border-radius: 8px; padding: 12px;
+      margin-bottom: 10px; border-left: 4px solid #ffc107;
+    }
+    .alerta-item strong { display: block; margin-bottom: 6px; font-size: 14px; }
+    .alerta-item input[type=date] {
+      padding: 7px 10px; border: 1px solid #ddd;
+      border-radius: 6px; font-size: 13px; margin-top: 4px;
+    }
+    .log-box {
+      background: #1e1e1e; color: #d4d4d4; border-radius: 10px;
+      padding: 16px; font-family: monospace; font-size: 12px;
+      max-height: 220px; overflow-y: auto;
+    }
+    .log-ok   { color: #4ec9b0; }
+    .log-warn { color: #ffd700; }
+    .log-err  { color: #f44747; }
+    .preview-table { width: 100%; border-collapse: collapse; font-size: 13px; overflow-x: auto; display: block; }
+    .preview-table th { background: #f0f9f4; color: #1a5e38; padding: 8px 10px; text-align: left; white-space: nowrap; }
+    .preview-table td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="tela-login" style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#1a5e38,#2e8b57);padding:20px">
+  <div class="login-box">
+    <div class="logo-area">
+      <h1>📊 Importar Totvs</h1>
+      <p>Sistema de Metas — Fazendas</p>
+    </div>
+    <div class="form-group">
+      <label>Chapa</label>
+      <input type="text" id="login-chapa" placeholder="Sua chapa"/>
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="login-senha" placeholder="Sua senha"/>
+    </div>
+    <button class="btn-primary" onclick="fazerLogin()">Entrar</button>
+    <p id="login-erro" class="erro-msg"></p>
+  </div>
+</div>
+
+<!-- APP IMPORTAÇÃO -->
+<div id="app" style="display:none">
+  <div class="import-wrap">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <div>
+        <h2 style="color:#1a5e38;margin:0">📥 Importar Colaboradores</h2>
+        <p style="color:#666;font-size:13px;margin:4px 0 0">Arquivo exportado do Totvs RM (.xlsx ou .csv)</p>
+      </div>
+      <a href="index.html" style="text-decoration:none">
+        <button class="btn-secondary" style="width:auto">← Voltar ao Sistema</button>
+      </a>
+    </div>
+
+    <!-- PASSO 1: UPLOAD -->
+    <div class="section-box" id="passo-upload">
+      <h3>1️⃣ Selecione o arquivo do Totvs</h3>
+      <div class="drop-zone" id="drop-zone"
+           onclick="document.getElementById('file-input').click()"
+           ondragover="dragOver(event)" ondrop="dropFile(event)" ondragleave="dragLeave(event)">
+        <span class="icon">📂</span>
+        <h3>Clique ou arraste o arquivo aqui</h3>
+        <p>Formatos aceitos: .xlsx, .xls, .csv</p>
+        <p style="margin-top:8px;font-size:12px;color:#999">Exportado direto do Totvs RM</p>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="lerArquivo(event)"/>
+    </div>
+
+    <!-- PASSO 2: MAPEAR COLUNAS -->
+    <div class="section-box" id="passo-mapa" style="display:none">
+      <h3>2️⃣ Confirme o mapeamento das colunas</h3>
+      <p style="font-size:13px;color:#666;margin-bottom:16px">
+        O sistema detectou automaticamente as colunas abaixo. Corrija se necessário.
+      </p>
+      <div class="mapa-grid" id="mapa-colunas"></div>
+      <div style="margin-top:16px">
+        <h4 style="font-size:14px;margin-bottom:10px">👁️ Prévia dos primeiros registros:</h4>
+        <div style="overflow-x:auto">
+          <table class="preview-table" id="preview-table"></table>
+        </div>
+      </div>
+      <button class="btn-primary" style="width:auto;margin-top:16px" onclick="analisarDados()">
+        ✅ Confirmar Mapeamento e Analisar
+      </button>
+    </div>
+
+    <!-- PASSO 3: ALERTAS DE MUDANÇA DE TURMA -->
+    <div id="passo-alertas" style="display:none">
+      <div style="background:#fff8e1;border:1px solid #ffc107;border-radius:12px;padding:20px;margin-bottom:20px">
+        <h3 style="color:#856404;margin-bottom:8px">⚠️ Mudanças de Turma Detectadas</h3>
+        <p style="font-size:13px;color:#856404;margin-bottom:16px">
+          Informe a data de início em cada nova turma. Isso garante o histórico correto para calcular a premiação nos sábados certos.
+        </p>
+        <div id="lista-alertas"></div>
+      </div>
+    </div>
+
+    <!-- PASSO 4: CONFIRMAR -->
+    <div class="section-box" id="passo-confirmar" style="display:none">
+      <h3>3️⃣ Confirmar Importação</h3>
+      <div class="stats-row" id="stats-preview"></div>
+      <button class="btn-primary" id="btn-importar" onclick="executarImportacao()">
+        🚀 Importar para o Firebase
+      </button>
+      <p id="msg-importar" class="erro-msg" style="text-align:left"></p>
+    </div>
+
+    <!-- RESULTADO -->
+    <div class="section-box" id="passo-resultado" style="display:none">
+      <h3>✅ Importação Concluída!</h3>
+      <div class="stats-row" id="stats-resultado"></div>
+      <h4 style="font-size:14px;margin:16px 0 8px">📋 Log detalhado:</h4>
+      <div class="log-box" id="log-box"></div>
+      <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn-primary" style="width:auto" onclick="novaImportacao()">📥 Nova Importação</button>
+        <a href="index.html" style="text-decoration:none">
+          <button class="btn-secondary" style="width:auto">← Voltar ao Sistema</button>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, doc, addDoc, getDocs,
+           updateDoc, query, where }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyDuz7WznZjMV0Jo5QRZHBSjNIC7XzMNH0A",
+    authDomain: "sistema-metas-fazenda.firebaseapp.com",
+    projectId: "sistema-metas-fazenda",
+    storageBucket: "sistema-metas-fazenda.firebasestorage.app",
+    messagingSenderId: "736592211764",
+    appId: "1:736592211764:web:2b07e6a79d8571cbae3f61"
+  });
+
+  window._auth = getAuth(app);
+  window._db   = getFirestore(app);
+  window._fb   = { signInWithEmailAndPassword, collection, doc,
+                   addDoc, getDocs, updateDoc, query, where };
+</script>
+<script src="importacao-totvs.js"></script>
+</body>
+</html>
