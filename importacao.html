@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Importar Colaboradores — Sistema de Metas</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .import-box { max-width: 700px; margin: 40px auto; }
+    .drop-area {
+      border: 3px dashed #2e8b57;
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      background: #f0f9f4;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 20px;
+    }
+    .drop-area:hover { background: #d4edda; }
+    .drop-area p { color: #2e8b57; font-size: 16px; font-weight: 600; margin: 0; }
+    .drop-area small { color: #666; font-size: 13px; }
+    .resultado-linha {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 14px; border-bottom: 1px solid #eee; font-size: 14px;
+    }
+    .resultado-linha:last-child { border-bottom: none; }
+    .alerta-box {
+      background: #fff3cd; border: 1px solid #ffc107;
+      border-radius: 10px; padding: 16px; margin-bottom: 16px;
+    }
+    .alerta-box h4 { color: #856404; margin-bottom: 10px; }
+    .alerta-item {
+      background: white; border-radius: 8px; padding: 12px;
+      margin-bottom: 10px; border-left: 4px solid #ffc107;
+    }
+    .alerta-item strong { display: block; margin-bottom: 6px; }
+    .alerta-item select, .alerta-item input {
+      width: 100%; padding: 8px; border: 1px solid #ddd;
+      border-radius: 6px; font-size: 13px; margin-top: 4px;
+    }
+    .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: white; border-radius: 10px; padding: 16px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
+    .stat-num { font-size: 28px; font-weight: 700; }
+    .stat-label { font-size: 12px; color: #888; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
+    .verde { color: #2e8b57; }
+    .amarelo { color: #856404; }
+    .azul { color: #004085; }
+    .log-box { background: #1e1e1e; color: #d4d4d4; border-radius: 10px; padding: 16px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; }
+    .log-ok { color: #4ec9b0; }
+    .log-warn { color: #ffd700; }
+    .log-err { color: #f44747; }
+    .exemplo-json { background: #1e1e1e; color: #d4d4d4; border-radius: 10px; padding: 16px; font-family: monospace; font-size: 12px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+
+<div id="tela-login-imp" style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#1a5e38,#2e8b57);padding:20px">
+  <div class="login-box">
+    <div class="logo-area">
+      <h1>🌾 Importar Colaboradores</h1>
+      <p>Faça login para continuar</p>
+    </div>
+    <div class="form-group">
+      <label>Chapa</label>
+      <input type="text" id="imp-chapa" placeholder="Sua chapa" />
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="imp-senha" placeholder="Sua senha" />
+    </div>
+    <button class="btn-primary" onclick="loginImportacao()">Entrar</button>
+    <p id="imp-login-erro" class="erro-msg"></p>
+  </div>
+</div>
+
+<div id="app-importacao" style="display:none; padding: 20px;">
+  <div class="import-box">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="color:#1a5e38">📥 Importar Colaboradores via JSON</h2>
+      <a href="index.html" class="btn-secondary" style="width:auto;text-decoration:none;padding:8px 16px">← Voltar</a>
+    </div>
+
+    <!-- EXEMPLO DO FORMATO -->
+    <div class="section-box" style="margin-bottom:20px">
+      <h3>📋 Formato esperado do arquivo JSON</h3>
+      <p style="font-size:13px;color:#666;margin-bottom:12px">O arquivo deve ser um array de objetos com os campos abaixo:</p>
+      <div class="exemplo-json">
+[
+  {
+    "chapa": "012915",
+    "nome": "João da Silva",
+    "funcao": "Operador",
+    "lider": "Carlos Souza",
+    "turma": "Turma A",
+    "admissao": "2023-01-15",
+    "demissao": "",
+    "inicioJornada": "07:00",
+    "fimJornada": "17:00"
+  },
+  {
+    "chapa": "012916",
+    "nome": "Maria Santos",
+    "funcao": "Auxiliar",
+    "lider": "Carlos Souza",
+    "turma": "Turma B",
+    "admissao": "2022-06-01",
+    "demissao": "2026-01-10",
+    "inicioJornada": "08:00",
+    "fimJornada": "18:00"
+  }
+]
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="section-box">
+      <h3>1️⃣ Selecione o arquivo JSON</h3>
+      <div class="drop-area" onclick="document.getElementById('arquivo-json').click()">
+        <p>📂 Clique aqui para selecionar o arquivo</p>
+        <small>Formato: .json | O arquivo vem do seu sistema de RH</small>
+      </div>
+      <input type="file" id="arquivo-json" accept=".json" style="display:none" onchange="lerArquivo(event)" />
+      <div id="preview-arquivo" style="display:none">
+        <p style="color:#2e8b57;font-weight:600" id="nome-arquivo"></p>
+        <p style="color:#666;font-size:13px" id="qtd-registros"></p>
+      </div>
+    </div>
+
+    <!-- ALERTAS DE MUDANÇA DE TURMA -->
+    <div id="secao-alertas" style="display:none">
+      <div class="alerta-box">
+        <h4>⚠️ Mudanças de Turma Detectadas</h4>
+        <p style="font-size:13px;color:#856404;margin-bottom:12px">
+          Os colaboradores abaixo estão em turmas diferentes das registradas. 
+          Informe a data de início em cada nova turma antes de confirmar a importação.
+        </p>
+        <div id="lista-alertas"></div>
+      </div>
+    </div>
+
+    <!-- BOTÃO IMPORTAR -->
+    <div id="secao-importar" style="display:none">
+      <div class="section-box">
+        <h3>2️⃣ Confirmar Importação</h3>
+        <div class="stats-grid" id="stats-preview"></div>
+        <button class="btn-primary" onclick="confirmarImportacao()" id="btn-importar">
+          🚀 Importar para o Firebase
+        </button>
+        <p id="imp-msg" class="ok-msg"></p>
+      </div>
+    </div>
+
+    <!-- LOG DE RESULTADO -->
+    <div id="secao-resultado" style="display:none">
+      <div class="section-box">
+        <h3>✅ Resultado da Importação</h3>
+        <div class="stats-grid" id="stats-resultado"></div>
+        <h4 style="margin:16px 0 8px;font-size:14px;color:#333">📋 Log detalhado:</h4>
+        <div class="log-box" id="log-importacao"></div>
+        <button class="btn-primary" style="margin-top:16px;width:auto" onclick="novaImportacao()">
+          📥 Nova Importação
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getAuth, signInWithEmailAndPassword
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    getFirestore,
+    collection, doc,
+    addDoc, setDoc, getDoc, getDocs,
+    updateDoc, query, where, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDuz7WznZjMV0Jo5QRZHBSjNIC7XzMNH0A",
+    authDomain: "sistema-metas-fazenda.firebaseapp.com",
+    projectId: "sistema-metas-fazenda",
+    storageBucket: "sistema-metas-fazenda.firebasestorage.app",
+    messagingSenderId: "736592211764",
+    appId: "1:736592211764:web:2b07e6a79d8571cbae3f61"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  window._auth = auth;
+  window._db = db;
+  window._fb = {
+    signInWithEmailAndPassword,
+    collection, doc,
+    addDoc, setDoc, getDoc, getDocs,
+    updateDoc, query, where, serverTimestamp
+  };
+</script>
+<script src="importacao.js"></script>
+</body>
+</html>
