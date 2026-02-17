@@ -1,0 +1,16 @@
+{
+  "name": "sistema-metas-fazenda-sync",
+  "version": "1.0.0",
+  "description": "Sincronização automática RH → Firebase",
+  "main": "sync.js",
+  "scripts": {
+    "sync": "node sync.js",
+    "sync:teste": "MODO_EXECUCAO=teste-apenas node sync.js"
+  },
+  "dependencies": {
+    "firebase": "^10.12.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
