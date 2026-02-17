@@ -8,7 +8,7 @@
 </head>
 <body>
 
-  <!-- TELA DE LOGIN -->
+  <!-- LOGIN -->
   <div id="tela-login" class="tela ativa">
     <div class="login-box">
       <div class="logo-area">
@@ -32,33 +32,16 @@
     </div>
   </div>
 
-  <!-- TELA DE CADASTRO -->
+  <!-- CADASTRO -->
   <div id="tela-cadastro" class="tela">
     <div class="login-box">
       <h2>📋 Primeiro Acesso</h2>
-      <p style="color:#666;font-size:13px;margin-bottom:20px">
-        Após o cadastro, aguarde aprovação do administrador.
-      </p>
-      <div class="form-group">
-        <label>Chapa</label>
-        <input type="text" id="cad-chapa" placeholder="Sua chapa de funcionário" />
-      </div>
-      <div class="form-group">
-        <label>Nome completo</label>
-        <input type="text" id="cad-nome" placeholder="Seu nome completo" />
-      </div>
-      <div class="form-group">
-        <label>E-mail</label>
-        <input type="email" id="cad-email" placeholder="Seu e-mail" />
-      </div>
-      <div class="form-group">
-        <label>Senha (mínimo 6 caracteres)</label>
-        <input type="password" id="cad-senha" placeholder="Crie uma senha" />
-      </div>
-      <div class="form-group">
-        <label>Confirmar Senha</label>
-        <input type="password" id="cad-senha2" placeholder="Repita a senha" />
-      </div>
+      <p style="color:#666;font-size:13px;margin-bottom:20px">Após o cadastro, aguarde aprovação do administrador.</p>
+      <div class="form-group"><label>Chapa</label><input type="text" id="cad-chapa" placeholder="Sua chapa"/></div>
+      <div class="form-group"><label>Nome completo</label><input type="text" id="cad-nome" placeholder="Seu nome"/></div>
+      <div class="form-group"><label>E-mail</label><input type="email" id="cad-email" placeholder="Seu e-mail"/></div>
+      <div class="form-group"><label>Senha (mín. 6 caracteres)</label><input type="password" id="cad-senha" placeholder="Crie uma senha"/></div>
+      <div class="form-group"><label>Confirmar Senha</label><input type="password" id="cad-senha2" placeholder="Repita a senha"/></div>
       <button class="btn-primary" onclick="cadastrarUsuario()">Solicitar Acesso</button>
       <button class="btn-secondary" onclick="mostrarLogin()">← Voltar ao Login</button>
       <p id="cad-erro" class="erro-msg"></p>
@@ -69,7 +52,6 @@
   <!-- SISTEMA PRINCIPAL -->
   <div id="app" class="tela" style="display:none">
 
-    <!-- HEADER -->
     <header class="header">
       <div class="header-left">
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
@@ -81,7 +63,6 @@
       </div>
     </header>
 
-    <!-- MENU LATERAL -->
     <nav id="menu-lateral" class="menu-lateral fechado">
       <ul>
         <li onclick="irPara('dashboard')">📊 Dashboard</li>
@@ -96,32 +77,19 @@
       </ul>
     </nav>
 
-    <!-- CONTEÚDO PRINCIPAL -->
     <main id="conteudo" class="conteudo">
 
       <!-- DASHBOARD -->
       <section id="pg-dashboard" class="pagina ativa">
         <h2>📊 Dashboard</h2>
         <div class="cards-grid">
-          <div class="card">
-            <div class="card-num" id="dash-total-turmas">0</div>
-            <div class="card-label">Turmas Ativas</div>
-          </div>
-          <div class="card">
-            <div class="card-num" id="dash-metas-atingidas">0%</div>
-            <div class="card-label">Metas Atingidas</div>
-          </div>
-          <div class="card">
-            <div class="card-num" id="dash-total-colab">0</div>
-            <div class="card-label">Colaboradores</div>
-          </div>
-          <div class="card">
-            <div class="card-num" id="dash-premios">0</div>
-            <div class="card-label">Prêmios Gerados</div>
-          </div>
+          <div class="card"><div class="card-num" id="dash-total-turmas">0</div><div class="card-label">Turmas Ativas</div></div>
+          <div class="card"><div class="card-num" id="dash-metas-atingidas">0%</div><div class="card-label">Metas Atingidas</div></div>
+          <div class="card"><div class="card-num" id="dash-total-colab">0</div><div class="card-label">Colaboradores</div></div>
+          <div class="card"><div class="card-num" id="dash-premios">0</div><div class="card-label">Prêmios Confirmados</div></div>
         </div>
         <div class="section-box">
-          <h3>🏆 Ranking de Turmas — Período Atual</h3>
+          <h3>🏆 Ranking de Turmas</h3>
           <div id="ranking-turmas">Carregando...</div>
         </div>
       </section>
@@ -139,9 +107,7 @@
         <button class="btn-primary" style="width:auto;margin-bottom:16px" onclick="abrirModalTurma()">+ Nova Turma</button>
         <div class="form-group">
           <label>Filtrar por Fazenda</label>
-          <select id="filtro-fazenda-turma" onchange="carregarTurmas()">
-            <option value="">Todas as fazendas</option>
-          </select>
+          <select id="filtro-fazenda-turma" onchange="carregarTurmas()"><option value="">Todas</option></select>
         </div>
         <div id="lista-turmas" class="lista-cards">Carregando...</div>
       </section>
@@ -151,13 +117,9 @@
         <h2>👥 Colaboradores</h2>
         <button class="btn-primary" style="width:auto;margin-bottom:16px" onclick="abrirModalColaborador()">+ Novo Colaborador</button>
         <div class="filtros-linha">
-          <select id="filtro-fazenda-colab" onchange="carregarColaboradores()">
-            <option value="">Todas as fazendas</option>
-          </select>
-          <select id="filtro-turma-colab" onchange="carregarColaboradores()">
-            <option value="">Todas as turmas</option>
-          </select>
-          <input type="text" id="filtro-nome-colab" placeholder="Buscar por nome ou chapa..." oninput="carregarColaboradores()" />
+          <select id="filtro-fazenda-colab" onchange="carregarColaboradores()"><option value="">Todas as fazendas</option></select>
+          <select id="filtro-turma-colab" onchange="carregarColaboradores()"><option value="">Todas as turmas</option></select>
+          <input type="text" id="filtro-nome-colab" placeholder="Buscar nome ou chapa..." oninput="carregarColaboradores()"/>
         </div>
         <div id="lista-colaboradores" class="lista-cards">Carregando...</div>
       </section>
@@ -167,35 +129,45 @@
         <h2>🎯 Lançar Metas e Resultados</h2>
         <div class="section-box">
           <h3>Novo Lançamento</h3>
+
+          <div class="form-group">
+            <label>📅 Semana (Domingo → Sábado)</label>
+            <select id="meta-semana" style="font-size:14px">
+              <option value="">Selecione a semana</option>
+            </select>
+            <small style="color:#888;font-size:12px">A premiação será para o sábado que finaliza a semana selecionada</small>
+          </div>
+
           <div class="form-group">
             <label>Fazenda</label>
             <select id="meta-fazenda" onchange="carregarTurmasMeta()">
               <option value="">Selecione a fazenda</option>
             </select>
           </div>
+
           <div class="form-group">
             <label>Turma</label>
             <select id="meta-turma">
               <option value="">Selecione a turma</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Data do Sábado de referência</label>
-            <input type="date" id="meta-data" />
-          </div>
+
           <div class="form-group">
             <label>Meta</label>
-            <input type="number" id="meta-valor" placeholder="Ex: 100" />
+            <input type="number" id="meta-valor" placeholder="Ex: 100"/>
           </div>
+
           <div class="form-group">
-            <label>Resultado alcançado</label>
-            <input type="number" id="meta-resultado" placeholder="Ex: 105 (deixe em branco se ainda não tem)" />
+            <label>Resultado alcançado <span style="color:#888;font-size:12px">(deixe em branco se ainda não tem)</span></label>
+            <input type="number" id="meta-resultado" placeholder="Ex: 105"/>
           </div>
-          <button class="btn-primary" style="width:auto" onclick="lancarMeta()">💾 Salvar Lançamento</button>
+
+          <button class="btn-primary" style="width:auto" onclick="lancarMeta()">💾 Salvar</button>
           <p id="meta-msg" class="ok-msg"></p>
         </div>
+
         <div class="section-box">
-          <h3>Histórico de Metas</h3>
+          <h3>📋 Histórico de Metas</h3>
           <div id="lista-metas">Carregando...</div>
         </div>
       </section>
@@ -205,37 +177,68 @@
         <h2>📅 Controle de Sábados</h2>
         <div class="section-box">
           <div class="form-group">
-            <label>Selecione o Sábado</label>
-            <input type="date" id="sabado-data" onchange="carregarControle()" />
-          </div>
-          <div class="form-group">
             <label>Turma</label>
-            <select id="sabado-turma" onchange="carregarControle()">
+            <select id="sabado-turma" onchange="carregarControleSabado()">
               <option value="">Selecione a turma</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>Data do Sábado</label>
+            <input type="date" id="sabado-data" onchange="carregarControleSabado()"/>
+            <small style="color:#888;font-size:12px">Selecione apenas sábados</small>
+          </div>
         </div>
+
         <div id="painel-sabado" class="section-box" style="display:none">
-          <h3 id="sabado-titulo">Colaboradores da Turma</h3>
-          <p id="sabado-status" style="margin-bottom:16px;font-weight:500"></p>
+          <div id="sabado-status" style="margin-bottom:16px;padding:12px;background:#f8f9fa;border-radius:8px;font-size:14px;line-height:1.6"></div>
           <div id="lista-sabado"></div>
-          <button class="btn-primary" style="width:auto;margin-top:16px" onclick="salvarPresenca()" id="btn-salvar-presenca" style="display:none">💾 Salvar Presenças</button>
+          <button class="btn-primary" style="width:auto;margin-top:16px;display:none"
+                  id="btn-salvar-presenca" onclick="salvarPresenca()">
+            💾 Salvar Presenças
+          </button>
         </div>
       </section>
 
       <!-- PREMIAÇÃO -->
       <section id="pg-premiacao" class="pagina">
         <h2>🏆 Premiação</h2>
-        <div class="filtros-linha" style="margin-bottom:20px">
-          <select id="premio-fazenda" onchange="filtrarPremiacao()">
-            <option value="">Todas as fazendas</option>
-          </select>
-          <select id="premio-periodo" onchange="filtrarPremiacao()">
-            <option value="">Todos os períodos</option>
-          </select>
+
+        <!-- Filtros -->
+        <div class="section-box" style="margin-bottom:16px">
+          <div class="filtros-linha">
+            <select id="premio-fazenda" onchange="filtrarPremiacao()"><option value="">Todas as fazendas</option></select>
+            <select id="premio-semana" onchange="filtrarPremiacao()"><option value="">Todas as semanas</option></select>
+          </div>
         </div>
-        <div id="lista-premiacao" class="lista-cards">
-          <p style="color:#888">Selecione os filtros acima para visualizar.</p>
+
+        <!-- Contadores -->
+        <div class="cards-grid" style="margin-bottom:16px">
+          <div class="card" style="grid-column:span 2">
+            <div class="card-num" id="count-conquistaram" style="color:#0056b3">0</div>
+            <div class="card-label">Conquistaram o Prêmio</div>
+          </div>
+          <div class="card" style="grid-column:span 2">
+            <div class="card-num" id="count-trabalharam" style="color:#2e8b57">0</div>
+            <div class="card-label">Conquistaram e Trabalharam no Sábado</div>
+          </div>
+        </div>
+
+        <!-- LISTA A -->
+        <div class="section-box">
+          <h3 style="color:#0056b3">📋 Lista A — Conquistaram o Prêmio</h3>
+          <p style="font-size:13px;color:#666;margin-bottom:12px">
+            Todos da turma que atingiu a meta (independente de ter trabalhado no sábado)
+          </p>
+          <div id="lista-conquistaram">Carregando...</div>
+        </div>
+
+        <!-- LISTA B -->
+        <div class="section-box">
+          <h3 style="color:#2e8b57">✅ Lista B — Conquistaram E Trabalharam no Sábado</h3>
+          <p style="font-size:13px;color:#666;margin-bottom:12px">
+            Apenas quem a turma ganhou a meta E o líder confirmou presença no sábado — estes recebem a premiação
+          </p>
+          <div id="lista-trabalharam">Carregando...</div>
         </div>
       </section>
 
@@ -243,38 +246,41 @@
       <section id="pg-exportar" class="pagina">
         <h2>📁 Exportar Dados</h2>
         <div class="section-box">
-          <h3>Filtros de Exportação</h3>
+          <h3>Filtros</h3>
           <div class="form-group">
             <label>Fazenda</label>
-            <select id="exp-fazenda">
-              <option value="">Todas as fazendas</option>
-            </select>
+            <select id="exp-fazenda"><option value="">Todas as fazendas</option></select>
           </div>
           <div class="form-group">
-            <label>Data início (sábado)</label>
-            <input type="date" id="exp-data-ini" />
-          </div>
-          <div class="form-group">
-            <label>Data fim (sábado)</label>
-            <input type="date" id="exp-data-fim" />
+            <label>Semana</label>
+            <select id="exp-semana"><option value="">Todas as semanas</option></select>
           </div>
           <div class="form-group">
             <label>Chapa do Gerador (6 dígitos)</label>
-            <input type="text" id="exp-chapa-gerador" placeholder="Ex: 000456" maxlength="6" />
+            <input type="text" id="exp-chapa-gerador" placeholder="Ex: 000456" maxlength="6"/>
           </div>
           <div class="form-group">
             <label>Hora Início</label>
-            <input type="time" id="exp-hora-ini" value="08:00" />
+            <input type="time" id="exp-hora-ini" value="08:00"/>
           </div>
           <div class="form-group">
             <label>Hora Fim</label>
-            <input type="time" id="exp-hora-fim" value="17:00" />
+            <input type="time" id="exp-hora-fim" value="17:00"/>
           </div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
             <button class="btn-primary" style="width:auto" onclick="exportarTXT()">📄 Exportar TXT</button>
-            <button class="btn-secondary" style="width:auto" onclick="exportarXLSX()">📊 Exportar CSV/Excel</button>
+            <button class="btn-secondary" style="width:auto" onclick="exportarCSV()">📊 Exportar CSV/Excel</button>
           </div>
           <p id="exp-msg" class="ok-msg"></p>
+        </div>
+
+        <div class="section-box" style="background:#f0f9f4;border:1px solid #2e8b57">
+          <h3 style="color:#1a5e38">📄 Formato do arquivo TXT</h3>
+          <p style="font-size:13px;color:#555;line-height:1.8">
+            <code>CHAPA;DATA_SABADO;0034;HORA_INICIO;HORA_FIM;0;CHAPA_GERADOR;0;1;1;FOLGA PREMIO</code><br/>
+            <strong>Exemplo:</strong> <code>012915;22/02/2026;0034;08:00;17:00;0;000001;0;1;1;FOLGA PREMIO</code><br/>
+            <small>Gerado apenas para quem <strong>conquistou E trabalhou no sábado</strong> (Lista B)</small>
+          </p>
         </div>
       </section>
 
@@ -298,7 +304,7 @@
   <div id="modal" class="modal-overlay" style="display:none">
     <div class="modal-box">
       <div class="modal-header">
-        <h3 id="modal-titulo">Título</h3>
+        <h3 id="modal-titulo"></h3>
         <button onclick="fecharModal()" class="btn-fechar">✕</button>
       </div>
       <div id="modal-corpo"></div>
@@ -309,28 +315,14 @@
     </div>
   </div>
 
-  <!-- ======================================================= -->
-  <!-- FIREBASE SDK — credenciais já configuradas              -->
-  <!-- ======================================================= -->
+  <!-- FIREBASE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      signOut,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import {
-      getFirestore,
-      collection, doc,
-      addDoc, setDoc, getDoc, getDocs,
-      updateDoc, deleteDoc,
-      query, where, orderBy,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // ✅ CREDENCIAIS DO FIREBASE (já preenchidas)
     const firebaseConfig = {
       apiKey: "AIzaSyDuz7WznZjMV0Jo5QRZHBSjNIC7XzMNH0A",
       authDomain: "sistema-metas-fazenda.firebaseapp.com",
@@ -340,65 +332,42 @@
       appId: "1:736592211764:web:2b07e6a79d8571cbae3f61"
     };
 
-    // Inicializar Firebase
-    const app = initializeApp(firebaseConfig);
+    const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
+    const db   = getFirestore(app);
 
-    // Expor globalmente para o app.js
     window.auth = auth;
-    window.db = db;
+    window.db   = db;
     window.fbFuncs = {
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      signOut,
-      onAuthStateChanged,
-      collection, doc,
-      addDoc, setDoc, getDoc, getDocs,
-      updateDoc, deleteDoc,
-      query, where, orderBy,
-      serverTimestamp
+      signInWithEmailAndPassword, createUserWithEmailAndPassword,
+      signOut, onAuthStateChanged,
+      collection, doc, addDoc, setDoc, getDoc, getDocs,
+      updateDoc, deleteDoc, query, where, orderBy, serverTimestamp
     };
 
-    // Monitorar estado de login
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
           const snap = await getDoc(doc(db, "usuarios", user.uid));
-          if (snap.exists()) {
+          if (snap.exists() && snap.data().aprovado) {
             const dados = snap.data();
-            if (dados.aprovado) {
-              window.usuarioLogado = { uid: user.uid, ...dados };
-              document.getElementById("usuario-nome").textContent =
-                dados.nome + " (" + dados.perfil + ")";
-              if (dados.perfil === "admin") {
-                document.getElementById("menu-admin").style.display = "block";
-              }
-              mostrarApp();
-              carregarDashboard();
-              carregarFazendasSelects();
-            } else {
-              alert("⏳ Sua conta ainda não foi aprovada pelo administrador. Aguarde.");
-              await signOut(auth);
-              mostrarLogin();
-            }
+            window.usuarioLogado = { uid: user.uid, ...dados };
+            document.getElementById("usuario-nome").textContent = dados.nome + " (" + dados.perfil + ")";
+            if (dados.perfil === "admin") document.getElementById("menu-admin").style.display = "block";
+            mostrarApp();
+            carregarDashboard();
+            carregarFazendasSelects();
           } else {
+            alert("⏳ Conta ainda não aprovada.");
             await signOut(auth);
             mostrarLogin();
           }
-        } catch (e) {
-          console.error("Erro ao verificar usuário:", e);
-          mostrarLogin();
-        }
+        } catch(e) { mostrarLogin(); }
       } else {
         mostrarLogin();
       }
     });
-
   </script>
-
-  <!-- Lógica principal do sistema -->
   <script src="app.js"></script>
-
 </body>
 </html>
