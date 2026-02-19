@@ -1,85 +1,110 @@
-# ✅ SISTEMA UNIFICADO — Um único link para tudo
+# ✅ CORREÇÕES APLICADAS
 
-## 🎯 O que mudou
+## 🔧 Problemas corrigidos
 
-**ANTES:** 4 páginas separadas
-- `index.html` (sistema principal)
-- `historico.html` (histórico do colaborador)  
-- `metas-resultados.html` (metas e resultados)
-- `importacao-totvs.html` (importação)
-
-**AGORA:** 1 página única
-- `index.html` (tudo integrado com menu lateral)
+### 1️⃣ Erro ao aprovar transferência
+**Problema:** `colaboradorId is not defined`  
+**Causa:** Variável com nome errado na função  
+**Solução:** Corrigido para usar `colabId` (nome do parâmetro)
 
 ---
 
-## 📁 Arquivos para substituir
-
-| Arquivo | Ação |
-|---------|------|
-| `index.html` | Substituir pelo `index-unificado.html` |
-| `app.js` | Substituir pelo `app-unificado.js` |
-| `style.css` | Manter o mesmo (não precisa mexer) |
+### 2️⃣ Campo de demissão e status "Desligado"
+**Problema:** Não tinha campo para cadastrar demissão  
+**Solução:**
+- ✅ Adicionado campo "Data Demissão" no modal de colaborador
+- ✅ Status muda automaticamente para "Desligado" quando há data de demissão
+- ✅ Campo `demitido` atualizado automaticamente (true se houver demissão)
+- ✅ Data de demissão visível na listagem
 
 ---
 
-## 🗂️ Menu lateral unificado
+### 3️⃣ Líder não conseguia lançar resultados
+**Problema:** Página de metas não mostrava o formulário para líder  
+**Solução:**
+- ✅ **Líder agora tem acesso** à página de Metas e Resultados
+- ✅ **Vê apenas suas turmas** (filtro automático por nome do líder)
+- ✅ Seletor de fazenda **escondido** para líder (não precisa)
+- ✅ Aba de importação **escondida** para líder (só admin/gestão)
+- ✅ Pode **lançar meta e resultados diários** das suas turmas
+- ✅ Pode **ver histórico** das suas turmas
 
+---
+
+### 4️⃣ Líder via tudo em colaboradores
+**Problema:** Líder conseguia ver colaboradores de todas as turmas  
+**Solução:**
+- ✅ **Filtro automático aplicado** — líder vê apenas colaboradores das turmas onde ele é líder
+- ✅ Filtro baseado no campo `liderNome` da turma comparado com nome do usuário logado
+- ✅ Admin e Gestão continuam vendo todos
+
+---
+
+### 5️⃣ Controle de sábados para líder
+**Problema:** Líder via todas as turmas  
+**Solução:**
+- ✅ **Filtro aplicado** — líder vê apenas suas turmas no seletor
+- ✅ Pode marcar presença apenas nas suas turmas
+
+---
+
+## 📋 Regras de negócio implementadas
+
+### Status do Colaborador
 ```
-📊 Dashboard
-👥 Colaboradores
-📜 Histórico de Colaborador ← NOVO (era página separada)
-🏘️ Turmas
-🌿 Fazendas
-🎯 Metas e Resultados ← NOVO (era página separada)
-   ├─ Aba: Lançar
-   ├─ Aba: Importar Excel
-   └─ Aba: Histórico
-📅 Controle de Sábados
-🏆 Premiação
-📁 Exportar
-📥 Importar Totvs ← NOVO (era página separada)
-🔔 Solicitações ← NOVO (só Admin/Gestão)
-⚙️ Administração
+Ativo      → Sem data de demissão (badge verde)
+Desligado  → Com data de demissão (badge vermelho)
 ```
 
+### Visibilidade por Perfil
+
+| Funcionalidade | Admin | Gestão | Líder |
+|----------------|-------|--------|-------|
+| Ver todos colaboradores | ✅ | ✅ | ❌ (só da sua turma) |
+| Lançar metas | ✅ | ✅ | ✅ (só da sua turma) |
+| Lançar resultados diários | ✅ | ✅ | ✅ (só da sua turma) |
+| Importar Excel (metas/resultados) | ✅ | ✅ | ❌ |
+| Ver histórico de metas | ✅ | ✅ | ✅ (só da sua turma) |
+| Controle de sábados | ✅ | ✅ | ✅ (só da sua turma) |
+
 ---
 
-## ✨ Benefícios
+## 🚀 Como aplicar as correções
 
-✅ **Um único link** para acessar tudo
-✅ **Navegação integrada** sem sair da página
-✅ **Menu contextual** — aparece "Solicitações" só para quem pode aprovar
-✅ **Mais profissional** e fácil de usar
-✅ **Mantém todas as funcionalidades** anteriores
-
----
-
-## 🚀 Como instalar
-
-1. No GitHub, **edite o `index.html` atual**
+1. No GitHub, edite o arquivo **`app-unificado.js`**
 2. **Apague todo o conteúdo**
-3. **Cole o conteúdo de `index-unificado.html`**
+3. **Cole o novo conteúdo** do `app-unificado.js` corrigido
 4. Commit changes
 
-5. **Edite o `app.js` atual**
+5. Edite o arquivo **`index-unificado.html`**
 6. **Apague todo o conteúdo**
-7. **Cole o conteúdo de `app-unificado.js`**
+7. **Cole o novo conteúdo** do `index-unificado.html` corrigido
 8. Commit changes
 
-9. **Aguarde 1-2 minutos** (GitHub Pages atualiza)
-10. **Acesse normalmente:** `https://SEU_USUARIO.github.io/sistema-metas-fazenda/`
+9. **Aguarde 1-2 minutos**
+10. **Teste** cada funcionalidade
 
 ---
 
-## 🗑️ Arquivos que podem ser deletados (opcional)
+## ✅ Checklist de testes
 
-Após confirmar que tudo funciona, você pode deletar:
-- `historico.html` e `historico.js`
-- `metas-resultados.html` e `metas-resultados.js`
+### Como Admin/Gestão:
+- [ ] Aprovar solicitação de transferência (não deve dar erro)
+- [ ] Cadastrar colaborador com data de demissão
+- [ ] Verificar se status fica "Desligado"
+- [ ] Lançar meta para qualquer turma
+- [ ] Lançar resultados diários
+- [ ] Ver todos os colaboradores
 
-Mas não tem problema deixar — eles não atrapalham.
+### Como Líder:
+- [ ] Abrir página de Metas e Resultados
+- [ ] Ver apenas suas turmas no seletor
+- [ ] Lançar meta da sua turma
+- [ ] Lançar resultados diários da sua turma
+- [ ] Controle de sábados — ver apenas suas turmas
+- [ ] Colaboradores — ver apenas da sua turma
+- [ ] Confirmar que NÃO vê aba de importação
 
 ---
 
-*Sistema de Metas v3.0 — Versão Unificada*
+*Correções aplicadas em Fevereiro/2026*
