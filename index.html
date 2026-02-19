@@ -282,7 +282,7 @@
         <!-- Abas internas -->
         <div class="abas-internas">
           <button class="aba-interna ativa" onclick="trocarAbaMetas('lancar')">📋 Lançar</button>
-          <button class="aba-interna" onclick="trocarAbaMetas('importar')">📥 Importar Excel</button>
+          <button class="aba-interna" onclick="trocarAbaMetas('importar')" id="aba-importar-meta" style="display:none">📥 Importar Excel</button>
           <button class="aba-interna" onclick="trocarAbaMetas('historico')">📊 Histórico</button>
         </div>
 
@@ -290,7 +290,7 @@
         <div id="aba-meta-lancar" class="painel-aba ativo">
           <div class="section-box">
             <h3>Selecionar Turma e Semana</h3>
-            <div class="form-group"><label>Fazenda</label><select id="meta-fazenda" onchange="carregarTurmasMeta()"><option value="">Selecione</option></select></div>
+            <div class="form-group" id="grupo-meta-fazenda"><label>Fazenda</label><select id="meta-fazenda" onchange="carregarTurmasMeta()"><option value="">Selecione</option></select></div>
             <div class="form-group"><label>Turma</label><select id="meta-turma" onchange="carregarSemanasMeta()"><option value="">Selecione</option></select></div>
             <div class="form-group"><label>Semana (Dom → Sáb)</label><select id="meta-semana" onchange="carregarDadosMetaSemana()"><option value="">Selecione</option></select></div>
           </div>
