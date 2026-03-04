@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sistema de Metas — Fazendas</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    /* Estilos específicos das novas funcionalidades */
     .timeline { position: relative; padding-left: 28px; }
     .timeline::before {
       content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
@@ -82,6 +80,16 @@
       text-align: center; background: #f0f9f4; cursor: pointer;
     }
     .drop-zone:hover { background: #d4edda; }
+
+    .resultado-linha {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 8px;
+      background: white; margin-bottom: 4px; border-radius: 6px;
+    }
+    .resultado-linha:hover { background: #f8f9fa; }
+    .resultado-linha .info { flex: 1; }
+    .resultado-linha .info strong { display: block; font-size: 14px; margin-bottom: 2px; }
+    .resultado-linha .info span { font-size: 12px; color: #666; }
   </style>
 </head>
 <body>
@@ -209,7 +217,6 @@
       <section id="pg-historico-colab" class="pagina">
         <h2>📜 Histórico do Colaborador</h2>
         
-        <!-- Busca -->
         <div class="section-box">
           <div class="form-group">
             <label>Buscar Colaborador</label>
@@ -218,7 +225,6 @@
           <div id="resultado-busca-hist"></div>
         </div>
 
-        <!-- Perfil do colaborador selecionado -->
         <div id="painel-hist-colab" style="display:none">
           <div class="colab-header">
             <div class="colab-avatar" id="hist-avatar">👤</div>
@@ -229,19 +235,16 @@
             <div id="hist-status-badge"></div>
           </div>
 
-          <!-- Situação atual -->
           <div class="section-box">
             <h3>🏘️ Situação Atual</h3>
             <div id="hist-situacao-atual">—</div>
           </div>
 
-          <!-- Timeline -->
           <div class="section-box">
             <h3>📅 Histórico de Turmas</h3>
             <div id="hist-timeline" class="timeline">Carregando...</div>
           </div>
 
-          <!-- Solicitar transferência (líder) -->
           <div id="hist-painel-solicitar" style="display:none" class="section-box">
             <h3>🔄 Solicitar Transferência</h3>
             <div style="background:#fff8e1;border:1px solid #ffc107;border-radius:10px;padding:16px">
@@ -267,7 +270,6 @@
             </div>
           </div>
 
-          <!-- Histórico de solicitações -->
           <div class="section-box">
             <h3>📋 Solicitações de Transferência</h3>
             <div id="hist-lista-solicit">Nenhuma.</div>
@@ -279,14 +281,12 @@
       <section id="pg-metas" class="pagina">
         <h2>🎯 Metas e Resultados</h2>
 
-        <!-- Abas internas -->
         <div class="abas-internas">
           <button class="aba-interna ativa" onclick="trocarAbaMetas('lancar')">📋 Lançar</button>
           <button class="aba-interna" onclick="trocarAbaMetas('importar')" id="aba-importar-meta" style="display:none">📥 Importar Excel</button>
           <button class="aba-interna" onclick="trocarAbaMetas('historico')">📊 Histórico</button>
         </div>
 
-        <!-- Aba: Lançar -->
         <div id="aba-meta-lancar" class="painel-aba ativo">
           <div class="section-box">
             <h3>Selecionar Turma e Semana</h3>
@@ -296,7 +296,6 @@
           </div>
 
           <div id="painel-meta-semana" style="display:none">
-            <!-- Meta da semana -->
             <div class="section-box">
               <h3>🎯 Meta da Semana</h3>
               <div class="form-group">
@@ -310,7 +309,6 @@
               <p id="meta-msg-sem" class="ok-msg"></p>
             </div>
 
-            <!-- Resultados diários -->
             <div class="section-box">
               <h3>📅 Resultados Diários</h3>
               <p style="font-size:13px;color:#666;margin-bottom:12px">
@@ -319,7 +317,6 @@
               <div id="meta-dias-grid"></div>
               <button class="btn-primary" style="width:auto;margin-top:12px" onclick="salvarResultadosDias()">💾 Salvar Resultados</button>
 
-              <!-- Resumo -->
               <div style="margin-top:16px;padding:14px;background:#f0f9f4;border-radius:10px">
                 <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
                   <div><span style="font-size:13px;color:#555">Soma:</span> <strong id="meta-soma-res" style="font-size:20px;color:#2e8b57">0</strong></div>
@@ -332,7 +329,6 @@
           </div>
         </div>
 
-        <!-- Aba: Importar -->
         <div id="aba-meta-importar" class="painel-aba">
           <div class="section-box">
             <h3>📥 Importar via Excel</h3>
@@ -356,7 +352,6 @@
           </div>
         </div>
 
-        <!-- Aba: Histórico -->
         <div id="aba-meta-historico" class="painel-aba">
           <div class="section-box">
             <div class="filtros-linha">
@@ -378,27 +373,62 @@
         <div id="painel-sabado-ctrl" style="display:none" class="section-box">
           <div id="sabado-status-msg" style="padding:12px;background:#f8f9fa;border-radius:8px;margin-bottom:12px"></div>
           <div id="sabado-lista-colab"></div>
-          <button class="btn-primary" style="width:auto;margin-top:12px;display:none" id="btn-salvar-sab" onclick="salvarPresencaSab()">💾 Salvar</button>
+          <button class="btn-primary" style="width:auto;margin-top:12px" id="btn-salvar-sab" onclick="salvarPresencaSab()">💾 Salvar</button>
         </div>
       </section>
 
       <!-- PREMIAÇÃO -->
       <section id="pg-premiacao" class="pagina">
         <h2>🏆 Premiação</h2>
+        
         <div class="section-box">
+          <h3>📅 Período de Avaliação</h3>
+          <p style="font-size:13px;color:#666;margin-bottom:12px">
+            <strong>Data início</strong> deve ser um <strong>DOMINGO</strong> | 
+            <strong>Data fim</strong> deve ser um <strong>SÁBADO</strong>
+          </p>
           <div class="filtros-linha">
-            <select id="premio-fazenda" onchange="filtrarPremiacao()"><option value="">Todas</option></select>
-            <select id="premio-semana" onchange="filtrarPremiacao()"><option value="">Todas</option></select>
+            <div class="form-group" style="flex:1">
+              <label>Data Início (Domingo)</label>
+              <input type="date" id="premio-data-inicio" onchange="filtrarPremiacao()" 
+                     style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px"/>
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>Data Fim (Sábado)</label>
+              <input type="date" id="premio-data-fim" onchange="filtrarPremiacao()" 
+                     style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px"/>
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>Fazenda</label>
+              <select id="premio-fazenda" onchange="filtrarPremiacao()">
+                <option value="">Todas</option>
+              </select>
+            </div>
+          </div>
+          
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn-primary" style="width:auto" onclick="exportarPremiacaoExcel('geral')">
+              📊 Exportar Geral (Excel)
+            </button>
+            <button class="btn-secondary" style="width:auto" onclick="exportarPremiacaoExcel('fazenda')">
+              📊 Por Fazenda (Excel)
+            </button>
+            <button class="btn-secondary" style="width:auto" onclick="exportarPremiacaoExcel('equipe')">
+              📊 Por Equipe (Excel)
+            </button>
           </div>
         </div>
+
         <div class="cards-grid" style="margin-bottom:16px">
           <div class="card" style="grid-column:span 2"><div class="card-num" id="count-conquistaram" style="color:#0056b3">0</div><div class="card-label">Conquistaram</div></div>
           <div class="card" style="grid-column:span 2"><div class="card-num" id="count-trabalharam" style="color:#2e8b57">0</div><div class="card-label">Conquistaram e Trabalharam</div></div>
         </div>
+
         <div class="section-box">
           <h3 style="color:#0056b3">📋 Lista A — Conquistaram</h3>
           <div id="lista-conquistaram">Carregando...</div>
         </div>
+
         <div class="section-box">
           <h3 style="color:#2e8b57">✅ Lista B — Conquistaram e Trabalharam</h3>
           <div id="lista-trabalharam">Carregando...</div>
@@ -427,7 +457,7 @@
         <h2>📥 Importar Colaboradores do Totvs</h2>
         <div class="section-box">
           <p style="font-size:13px;color:#666;margin-bottom:16px">
-            Exporte a listagem de colaboradores do Totvs RM em Excel e importe aqui. O sistema detecta mudanças de turma automaticamente.
+            Exporte a listagem de colaboradores do Totvs RM em Excel e importe aqui.
           </p>
           <div class="drop-zone" onclick="document.getElementById('totvs-file').click()">
             <p style="color:#2e8b57;font-weight:600;margin:0">📂 Selecionar arquivo Excel do Totvs</p>
@@ -438,7 +468,7 @@
         </div>
       </section>
 
-      <!-- SOLICITAÇÕES (Gestão/Admin) -->
+      <!-- SOLICITAÇÕES -->
       <section id="pg-solicitacoes" class="pagina">
         <h2>🔔 Solicitações de Transferência</h2>
         <div class="section-box">
@@ -535,6 +565,11 @@
       }
     });
   </script>
+  
+  <!-- XLSX para exportação Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
   <script src="app-unificado.js"></script>
 </body>
 </html>
