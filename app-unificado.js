@@ -808,8 +808,8 @@ function trocarAbaMetas(aba) {
 
 function preencherSemanasMeta() {
   const hoje = new Date();
-  const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 84);
-  const fim = new Date(hoje); fim.setDate(hoje.getDate() + 28);
+  const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 84);  // 12 semanas atrás
+  const fim = new Date(hoje); fim.setDate(hoje.getDate() + 14);        // 2 semanas à frente
   const semanas = gerarSemanas(inicio.toISOString().split('T')[0], fim.toISOString().split('T')[0]);
   
   const sel = document.getElementById('meta-semana');
@@ -1221,8 +1221,8 @@ async function carregarPaginaSabados() {
   
   // Preencher semanas
   const hoje = new Date();
-  const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 84);
-  const fim = new Date(hoje); fim.setDate(hoje.getDate() + 28);
+  const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 84);  // 12 semanas atrás
+  const fim = new Date(hoje); fim.setDate(hoje.getDate() + 14);        // 2 semanas à frente
   const semanas = gerarSemanas(inicio.toISOString().split('T')[0], fim.toISOString().split('T')[0]);
   
   const selSem = document.getElementById('sabado-semana');
@@ -1797,12 +1797,18 @@ async function carregarAdmin() {
   
   const snapT = await window.fbFuncs.getDocs(window.fbFuncs.collection(window.db,'usuarios'));
   const lU = document.getElementById('lista-usuarios');
-  lU.innerHTML = '<table><tr><th>Nome</th><th>Chapa</th><th>Perfil</th><th>Status</th><th></th></tr>';
+  lU.innerHTML = '<table style="width:100%"><tr><th>Nome</th><th>Chapa</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Ações</th></tr>';
   snapT.docs.forEach(d => {
     const u = d.data();
     const st = u.aprovado ? '<span class="badge badge-verde">Ativo</span>' : '<span class="badge badge-amarelo">Pendente</span>';
-    lU.innerHTML += `<tr><td>${u.nome}</td><td>${u.chapa}</td><td>${u.perfil}</td><td>${st}</td>
-      <td><button class="btn-secondary btn-sm" onclick="alterarPerfil('${d.id}','${u.perfil}')">✏️</button></td></tr>`;
+    lU.innerHTML += `<tr>
+      <td>${u.nome}</td>
+      <td>${u.chapa}</td>
+      <td style="font-size:12px">${u.email}</td>
+      <td>${u.perfil}</td>
+      <td>${st}</td>
+      <td><button class="btn-primary btn-sm" onclick="editarUsuarioCompleto('${d.id}')">✏️ Editar</button></td>
+    </tr>`;
   });
   lU.innerHTML += '</table>';
 }
@@ -1814,9 +1820,61 @@ async function aprovarUsuario(uid) {
   alert('✅ Aprovado!'); carregarAdmin();
 }
 
-async function alterarPerfil(uid, perfilAtual) {
-  const novo = prompt('Novo perfil (lider/administrativo/encarregado/gestao/admin):', perfilAtual);
-  if (!novo) return;
-  await window.fbFuncs.updateDoc(window.fbFuncs.doc(window.db,'usuarios',uid), { perfil:novo });
-  alert('✅ Atualizado!'); carregarAdmin();
+async function editarUsuarioCompleto(uid) {
+  const snap = await window.fbFuncs.getDoc(window.fbFuncs.doc(window.db,'usuarios',uid));
+  if (!snap.exists()) return;
+  const u = snap.data();
+  
+  abrirModal('Editar Usuário', `
+    <div class="form-group">
+      <label>Nome Completo</label>
+      <input id="edit-nome" value="${u.nome||''}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px"/>
+    </div>
+    <div class="form-group">
+      <label>Chapa</label>
+      <input id="edit-chapa" value="${u.chapa||''}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px"/>
+    </div>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input id="edit-email" value="${u.email||''}" type="email" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px"/>
+    </div>
+    <div class="form-group">
+      <label>Perfil</label>
+      <select id="edit-perfil" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px">
+        <option value="lider" ${u.perfil==='lider'?'selected':''}>Líder</option>
+        <option value="administrativo" ${u.perfil==='administrativo'?'selected':''}>Administrativo</option>
+        <option value="encarregado" ${u.perfil==='encarregado'?'selected':''}>Encarregado</option>
+        <option value="gestao" ${u.perfil==='gestao'?'selected':''}>Gestão</option>
+        <option value="admin" ${u.perfil==='admin'?'selected':''}>Admin</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="edit-aprovado" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px">
+        <option value="true" ${u.aprovado?'selected':''}>Ativo</option>
+        <option value="false" ${!u.aprovado?'selected':''}>Bloqueado</option>
+      </select>
+    </div>
+  `, () => salvarEdicaoUsuario(uid));
+}
+
+async function salvarEdicaoUsuario(uid) {
+  const dados = {
+    nome: document.getElementById('edit-nome').value.trim(),
+    chapa: document.getElementById('edit-chapa').value.trim(),
+    email: document.getElementById('edit-email').value.trim(),
+    perfil: document.getElementById('edit-perfil').value,
+    aprovado: document.getElementById('edit-aprovado').value === 'true',
+    atualizadoEm: new Date().toISOString(),
+    atualizadoPor: window.usuarioLogado.uid
+  };
+  
+  if (!dados.nome || !dados.chapa || !dados.email) {
+    alert('Preencha todos os campos obrigatórios.'); return;
+  }
+  
+  await window.fbFuncs.updateDoc(window.fbFuncs.doc(window.db,'usuarios',uid), dados);
+  fecharModal();
+  alert('✅ Usuário atualizado!');
+  carregarAdmin();
 }
