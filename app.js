@@ -389,6 +389,16 @@ async function carregarColaboradores() {
   const fazMap={}; snapF.forEach(d=>fazMap[d.id]=d.data().nome);
   let colab=[]; snapC.forEach(d=>colab.push({id:d.id,...d.data()}));
   
+  // FILTRO PARA LÍDER: só ver colaboradores da sua turma
+  if (window.usuarioLogado.perfil === 'lider') {
+    // Buscar turma(s) onde o usuário é líder
+    const turmasDoLider = Object.values(turmaMap).filter(t => 
+      t.liderNome?.toLowerCase().trim() === window.usuarioLogado.nome?.toLowerCase().trim()
+    );
+    const turmaIdsDoLider = turmasDoLider.map(t => t.id);
+    colab = colab.filter(c => turmaIdsDoLider.includes(c.turmaId));
+  }
+  
   if (filtroFaz)   colab = colab.filter(c => turmaMap[c.turmaId]?.fazendaId===filtroFaz);
   if (filtroTurma) colab = colab.filter(c => c.turmaId===filtroTurma);
   if (filtroNome)  colab = colab.filter(c => c.nome?.toLowerCase().includes(filtroNome)||c.chapa?.toLowerCase().includes(filtroNome));
@@ -397,13 +407,14 @@ async function carregarColaboradores() {
   lista.innerHTML = '';
   colab.forEach(c => {
     const t=turmaMap[c.turmaId];
-    const badge = c.demitido
-      ? '<span class="badge badge-vermelho">Demitido</span>'
+    const badge = c.demitido || c.demissao
+      ? '<span class="badge badge-vermelho">Desligado</span>'
       : '<span class="badge badge-verde">Ativo</span>';
     lista.innerHTML += `<div class="item-card">
       <div class="item-card-info">
         <strong>${c.nome} <small style="color:#999">#${c.chapa}</small></strong>
         <span>🏘️ ${t?.nome||'—'} | 🌿 ${t?fazMap[t.fazendaId]||'—':'—'} | ${c.funcao||''}</span>
+        ${c.demissao ? `<span style="font-size:12px;color:#e53e3e">Demissão: ${formatarData(c.demissao)}</span>` : ''}
       </div>
       <div style="display:flex;gap:8px;align-items:center">${badge}
         <button class="btn-primary btn-sm" onclick="editarColaborador('${c.id}')">✏️</button>
@@ -425,6 +436,7 @@ function abrirModalColaborador(id, d) {
     <div class="form-group"><label>Função</label><input id="m-col-funcao" value="${d?.funcao||''}"/></div>
     <div class="form-group"><label>Turma</label><select id="m-col-turma">${opsTurmas}</select></div>
     <div class="form-group"><label>Data Admissão</label><input type="date" id="m-col-adm" value="${d?.admissao||''}"/></div>
+    <div class="form-group"><label>Data Demissão</label><input type="date" id="m-col-dem" value="${d?.demissao||''}"/></div>
     <div class="form-group"><label>Hora Início</label><input type="time" id="m-col-hi" value="${d?.inicioJornada||'08:00'}"/></div>
     <div class="form-group"><label>Hora Fim</label><input type="time" id="m-col-hf" value="${d?.fimJornada||'17:00'}"/></div>`,
     () => salvarColaborador(id));
@@ -434,17 +446,20 @@ async function salvarColaborador(id) {
   const chapa  = document.getElementById('m-col-chapa').value.trim();
   const nome   = document.getElementById('m-col-nome').value.trim();
   if (!chapa||!nome) { alert('Chapa e nome obrigatórios.'); return; }
+  const demissao = document.getElementById('m-col-dem').value;
   const dados = { 
     chapa, nome,
     funcao:       document.getElementById('m-col-funcao').value.trim(),
     turmaId:      document.getElementById('m-col-turma').value,
     admissao:     document.getElementById('m-col-adm').value,
+    demissao:     demissao,
     inicioJornada:document.getElementById('m-col-hi').value,
     fimJornada:   document.getElementById('m-col-hf').value,
+    demitido:     !!demissao,
     atualizadoEm: new Date().toISOString()
   };
   if (id) await window.fbFuncs.updateDoc(window.fbFuncs.doc(window.db,'colaboradores',id), dados);
-  else await window.fbFuncs.addDoc(window.fbFuncs.collection(window.db,'colaboradores'), { ...dados, demitido:false, criadoEm:new Date().toISOString() });
+  else await window.fbFuncs.addDoc(window.fbFuncs.collection(window.db,'colaboradores'), { ...dados, criadoEm:new Date().toISOString() });
   fecharModal(); carregarColaboradores();
 }
 
@@ -717,7 +732,7 @@ async function aprovarTransf(solId, colabId, turmaOrigemId, turmaDestinoId, turm
 
   // Criar novo histórico
   await window.fbFuncs.addDoc(window.fbFuncs.collection(window.db, 'historicoTurmas'), {
-    colaboradorId,
+    colaboradorId: colabId,
     turmaIdAntiga: turmaOrigemId || null,
     turmaIdNova:   turmaDestinoId,
     turmaNomeNova: turmaDestinoNome,
@@ -761,6 +776,24 @@ async function carregarPaginaMetas() {
   await carregarFazendasSelects();
   await carregarTurmasCache();
   preencherSemanasMeta();
+  
+  // Ajustar interface para líder
+  if (window.usuarioLogado.perfil === 'lider') {
+    // Esconder aba de importação
+    const abaImport = document.getElementById('aba-importar-meta');
+    if (abaImport) abaImport.style.display = 'none';
+    
+    // Esconder seletor de fazenda
+    const grupoFaz = document.getElementById('grupo-meta-fazenda');
+    if (grupoFaz) grupoFaz.style.display = 'none';
+    
+    // Carregar automaticamente as turmas do líder
+    await carregarTurmasMeta();
+  } else {
+    // Mostrar aba de importação para admin/gestão
+    const abaImport = document.getElementById('aba-importar-meta');
+    if (abaImport) abaImport.style.display = 'inline-block';
+  }
 }
 
 function trocarAbaMetas(aba) {
@@ -775,8 +808,8 @@ function trocarAbaMetas(aba) {
 
 function preencherSemanasMeta() {
   const hoje = new Date();
-  const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 84);
-  const fim = new Date(hoje); fim.setDate(hoje.getDate() + 28);
+  const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 84);  // 12 semanas atrás
+  const fim = new Date(hoje); fim.setDate(hoje.getDate() + 14);        // 2 semanas à frente
   const semanas = gerarSemanas(inicio.toISOString().split('T')[0], fim.toISOString().split('T')[0]);
   
   const sel = document.getElementById('meta-semana');
@@ -792,10 +825,20 @@ async function carregarTurmasMeta() {
   const fazId = document.getElementById('meta-fazenda').value;
   const sel = document.getElementById('meta-turma');
   sel.innerHTML = '<option value="">Selecione a turma</option>';
-  if (!fazId) return;
+  if (!fazId && !['admin','gestao'].includes(window.usuarioLogado.perfil)) return;
   
-  Object.values(turmasCache)
-    .filter(t => t.fazendaId === fazId)
+  let turmasFiltradas = Object.values(turmasCache);
+  
+  // FILTRO PARA LÍDER: só ver sua turma
+  if (window.usuarioLogado.perfil === 'lider') {
+    turmasFiltradas = turmasFiltradas.filter(t => 
+      t.liderNome?.toLowerCase().trim() === window.usuarioLogado.nome?.toLowerCase().trim()
+    );
+  } else if (fazId) {
+    turmasFiltradas = turmasFiltradas.filter(t => t.fazendaId === fazId);
+  }
+  
+  turmasFiltradas
     .sort((a,b) => a.nome.localeCompare(b.nome))
     .forEach(t => sel.innerHTML += `<option value="${t.id}">${t.nome}</option>`);
 }
@@ -1161,15 +1204,25 @@ async function carregarPaginaSabados() {
   const sel = document.getElementById('sabado-turma');
   if (sel) {
     sel.innerHTML = '<option value="">Selecione</option>';
-    Object.values(turmasCache).sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(t => {
+    
+    let turmasFiltradas = Object.values(turmasCache);
+    
+    // FILTRO PARA LÍDER: só ver suas turmas
+    if (window.usuarioLogado.perfil === 'lider') {
+      turmasFiltradas = turmasFiltradas.filter(t => 
+        t.liderNome?.toLowerCase().trim() === window.usuarioLogado.nome?.toLowerCase().trim()
+      );
+    }
+    
+    turmasFiltradas.sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(t => {
       sel.innerHTML += `<option value="${t.id}">${t.nome}</option>`;
     });
   }
   
   // Preencher semanas
   const hoje = new Date();
-  const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 84);
-  const fim = new Date(hoje); fim.setDate(hoje.getDate() + 28);
+  const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 84);  // 12 semanas atrás
+  const fim = new Date(hoje); fim.setDate(hoje.getDate() + 14);        // 2 semanas à frente
   const semanas = gerarSemanas(inicio.toISOString().split('T')[0], fim.toISOString().split('T')[0]);
   
   const selSem = document.getElementById('sabado-semana');
@@ -1744,12 +1797,18 @@ async function carregarAdmin() {
   
   const snapT = await window.fbFuncs.getDocs(window.fbFuncs.collection(window.db,'usuarios'));
   const lU = document.getElementById('lista-usuarios');
-  lU.innerHTML = '<table><tr><th>Nome</th><th>Chapa</th><th>Perfil</th><th>Status</th><th></th></tr>';
+  lU.innerHTML = '<table style="width:100%"><tr><th>Nome</th><th>Chapa</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Ações</th></tr>';
   snapT.docs.forEach(d => {
     const u = d.data();
     const st = u.aprovado ? '<span class="badge badge-verde">Ativo</span>' : '<span class="badge badge-amarelo">Pendente</span>';
-    lU.innerHTML += `<tr><td>${u.nome}</td><td>${u.chapa}</td><td>${u.perfil}</td><td>${st}</td>
-      <td><button class="btn-secondary btn-sm" onclick="alterarPerfil('${d.id}','${u.perfil}')">✏️</button></td></tr>`;
+    lU.innerHTML += `<tr>
+      <td>${u.nome}</td>
+      <td>${u.chapa}</td>
+      <td style="font-size:12px">${u.email}</td>
+      <td>${u.perfil}</td>
+      <td>${st}</td>
+      <td><button class="btn-primary btn-sm" onclick="editarUsuarioCompleto('${d.id}')">✏️ Editar</button></td>
+    </tr>`;
   });
   lU.innerHTML += '</table>';
 }
@@ -1761,9 +1820,61 @@ async function aprovarUsuario(uid) {
   alert('✅ Aprovado!'); carregarAdmin();
 }
 
-async function alterarPerfil(uid, perfilAtual) {
-  const novo = prompt('Novo perfil (lider/administrativo/encarregado/gestao/admin):', perfilAtual);
-  if (!novo) return;
-  await window.fbFuncs.updateDoc(window.fbFuncs.doc(window.db,'usuarios',uid), { perfil:novo });
-  alert('✅ Atualizado!'); carregarAdmin();
+async function editarUsuarioCompleto(uid) {
+  const snap = await window.fbFuncs.getDoc(window.fbFuncs.doc(window.db,'usuarios',uid));
+  if (!snap.exists()) return;
+  const u = snap.data();
+  
+  abrirModal('Editar Usuário', `
+    <div class="form-group">
+      <label>Nome Completo</label>
+      <input id="edit-nome" value="${u.nome||''}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px"/>
+    </div>
+    <div class="form-group">
+      <label>Chapa</label>
+      <input id="edit-chapa" value="${u.chapa||''}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px"/>
+    </div>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input id="edit-email" value="${u.email||''}" type="email" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px"/>
+    </div>
+    <div class="form-group">
+      <label>Perfil</label>
+      <select id="edit-perfil" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px">
+        <option value="lider" ${u.perfil==='lider'?'selected':''}>Líder</option>
+        <option value="administrativo" ${u.perfil==='administrativo'?'selected':''}>Administrativo</option>
+        <option value="encarregado" ${u.perfil==='encarregado'?'selected':''}>Encarregado</option>
+        <option value="gestao" ${u.perfil==='gestao'?'selected':''}>Gestão</option>
+        <option value="admin" ${u.perfil==='admin'?'selected':''}>Admin</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="edit-aprovado" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px">
+        <option value="true" ${u.aprovado?'selected':''}>Ativo</option>
+        <option value="false" ${!u.aprovado?'selected':''}>Bloqueado</option>
+      </select>
+    </div>
+  `, () => salvarEdicaoUsuario(uid));
+}
+
+async function salvarEdicaoUsuario(uid) {
+  const dados = {
+    nome: document.getElementById('edit-nome').value.trim(),
+    chapa: document.getElementById('edit-chapa').value.trim(),
+    email: document.getElementById('edit-email').value.trim(),
+    perfil: document.getElementById('edit-perfil').value,
+    aprovado: document.getElementById('edit-aprovado').value === 'true',
+    atualizadoEm: new Date().toISOString(),
+    atualizadoPor: window.usuarioLogado.uid
+  };
+  
+  if (!dados.nome || !dados.chapa || !dados.email) {
+    alert('Preencha todos os campos obrigatórios.'); return;
+  }
+  
+  await window.fbFuncs.updateDoc(window.fbFuncs.doc(window.db,'usuarios',uid), dados);
+  fecharModal();
+  alert('✅ Usuário atualizado!');
+  carregarAdmin();
 }
